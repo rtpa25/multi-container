@@ -1,0 +1,64 @@
+version: '3'
+services:
+    postgres:
+        image: postgres:latest
+        environment:
+            - POSTGRES_PASSWORD=postgres
+            - POSTGRES_USER=postgres
+    redis:
+        image: redis:latest
+    api:
+        depends_on:
+            - postgres
+            - redis
+        build:
+            dockerfile: ./apps/api/Dockerfile.dev
+            context: .
+        volumes:
+            - /app/node_modules
+            - .:/app
+        environment:
+            - REDIS_HOST=redis #name of the service is enough to connect to it
+            - REDIS_PORT=6379
+            - REDIS_DB_NAME=values
+            - REDIS_PUBLISHER_CHANNEL=insert
+            - PG_USER=postgres
+            - PG_HOST=postgres
+            - PG_DATABASE=postgres
+            - PG_PASSWORD=postgres
+            - PG_PORT=5432
+    worker:
+        depends_on:
+            - redis
+        build:
+            dockerfile: ./apps/worker/Dockerfile.dev
+            context: .
+        volumes:
+            - /app/node_modules
+            - .:/app
+        environment:
+            - REDIS_HOST=redis #name of the service is enough to connect to it
+            - REDIS_PORT=6379
+            - REDIS_DB_NAME=values
+            - REDIS_PUBLISHER_CHANNEL=insert
+    web:
+        depends_on:
+            - api
+            - worker
+        build:
+            dockerfile: ./apps/web/Dockerfile.dev
+            context: .
+        volumes:
+            - /app/node_modules
+            - .:/app
+    nginx:
+        depends_on:
+            - web
+            - api
+        restart: always
+        build:
+            dockerfile: Dockerfile.dev
+            context: ./apps/nginx
+        ports:
+            - '3050:80'
+
