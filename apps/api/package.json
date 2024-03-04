@@ -17,6 +17,7 @@
         "ioredis": "^5.3.2",
         "pg": "^8.11.3"
     },
+    "packageManager": "pnpm",
     "devDependencies": {
         "@multi-docker/typescript-config": "workspace:*",
         "@types/cors": "^2.8.17",
